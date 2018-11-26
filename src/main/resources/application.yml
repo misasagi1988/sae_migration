@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: sae-migration
+  datasource:
+    mysql:
+      url: jdbc:mysql://172.16.100.234:3399/hansight?useUnicode=true&characterEncoding=utf8&useSSL=false
+      username: hansight
+      password: hansight
+      driver-class-name: com.mysql.jdbc.Driver
+      test-on-borrow: true
+      validation-query: select 1
+    h2:
+      #url: jdbc:h2:./db/h2_statement;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE
+      url: jdbc:h2:D:\\db\\h2_statement;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE
+      username: root
+      password: hansight
+      driver-class-name: org.h2.Driver
+      test-on-borrow: true
+      validation-query: SELECT 1
+      test-while-idle: true
+      time-between-eviction-runs-millis: 3600000
+
+logging:
+  config: log4j2.yml
+
+
+migration:
+  adapt.url: http://172.16.100.234:8080/sae/api/cep/monitor/utils/rule/adapt
+  addrule.url: http://172.16.100.234:8080/sae/api/cep/rules
+  addtemplate.url: http://172.16.100.234:8080/sae/api/cep/templates
+  filter.convert.url: http://127.0.0.1:8080/api/cep/monitor/utils/filter/convert

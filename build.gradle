@@ -1,0 +1,67 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.12.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+group = 'com.hansight.v5'
+version = '1.0'
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+	maven {
+		url "http://hub.hansight.net/repository/hansight-public/"
+	}
+}
+
+configurations {
+	compile.exclude module: 'spring-boot-starter-logging'
+}
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-web')
+	compile('org.springframework.boot:spring-boot-starter-jdbc')
+    compile('mysql:mysql-connector-java')
+	compile group: 'com.h2database', name: 'h2', version: '1.4.193'
+    compile('org.springframework.boot:spring-boot-starter-log4j2')
+    compile group: 'com.google.guava', name: 'guava', version: '23.0'
+    compile group: 'com.alibaba', name: 'fastjson', version: '1.2.41'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    // 支持log4j2.yml必备
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
+    //compile group: 'log4j', name: 'log4j', version: '1.2.17'
+	compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
+}
+task makePackage(type: Copy) {
+	dependsOn jar
+
+	from("build/libs/${jar.baseName}-${jar.version}.jar") {
+		rename {
+			String fileName -> fileName.replace("-${jar.version}", "")
+		}
+	}
+
+
+	from('src/main/resources') {
+		include "application.yml"
+		include "log4j2.yml"
+	}
+	into "build/package"
+
+	mkdir("build/package/logs")
+}
+
+build.dependsOn('makePackage')
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
