@@ -101,7 +101,7 @@ public class Migration implements Runnable {
         // 处理规则
         LOG.info("delete old rules.");
         mysqlTemplate.execute("delete from sae_rule");
-        List<Rule> odlRules = h2Template.query("select id, rule_name, raw from cep_rule" , new ListRRowMapper());
+        List<Rule> odlRules = h2Template.query("select id, rule_name, status, raw from cep_rule" , new ListRRowMapper());
         failedCnt = odlRules.size();
         LOG.info("migrate rule count: {}.", failedCnt);
         while (true) {
@@ -115,6 +115,16 @@ public class Migration implements Runnable {
                     // convert rule
                     ResponseEntity<Object> adapter = restTemplate.postForEntity(adaptUrl, or.raw, Object.class);
                     // add rule
+                    /*String rawRule = adapter.getBody().toString();
+                    try{
+                        Map map = JsonUtil.parseObject(rawRule, HashMap.class);
+                        map.put("status", or.status);
+                        rawRule = JsonUtil.parseToPrettyJson(map);
+                    } catch (Exception e) {
+                        LOG.error("parse raw to map error: {}", e.getMessage());
+                        rawRule = adapter.getBody().toString();
+                    }
+                    ResponseEntity responseEntity = restTemplate.postForEntity(addUrl, rawRule, Object.class);*/
                     ResponseEntity responseEntity = restTemplate.postForEntity(addUrl, adapter.getBody(), Object.class);
                     if(!responseEntity.getStatusCode().is2xxSuccessful()) {
                         throw new Exception("add rule failed, statusCode=" + responseEntity.getStatusCode());
@@ -125,7 +135,7 @@ public class Migration implements Runnable {
                         throw new Exception("add rule failed: " + res.get("messages"));
                     }
                     // update id
-                    mysqlTemplate.update(String.format("update sae_rule set id=%d where rule_name='%s'", or.id, or.name));
+                    mysqlTemplate.update(String.format("update sae_rule set id=%d and status=%d where rule_name='%s'", or.id, or.status, or.name));
                     LOG.info("add rule={} success. failedCnt={}", or.name, --failedCnt);
 
                 } catch (Exception e) {
@@ -224,6 +234,7 @@ public class Migration implements Runnable {
         String name;
         int id;
         String raw;
+        int status;
     }
 
     class RuleType {
@@ -265,6 +276,7 @@ public class Migration implements Runnable {
             rule.id = rs.getInt("id");
             rule.name = rs.getString("rule_name");
             rule.raw = rs.getString("raw");
+            rule.status = rs.getInt("status");
             return rule;
         }
     }
