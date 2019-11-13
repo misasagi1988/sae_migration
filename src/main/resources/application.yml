@@ -25,6 +25,7 @@ logging:
 
 
 migration:
+  #default.sae.ruletype.name: 默认规则类型
   adapt.url: http://172.16.100.234:8080/sae/api/cep/monitor/utils/rule/adapt
   addrule.url: http://172.16.100.234:8080/sae/api/cep/rules
   addtemplate.url: http://172.16.100.234:8080/sae/api/cep/templates

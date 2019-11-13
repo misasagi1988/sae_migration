@@ -43,6 +43,12 @@ public class Migration implements Runnable {
     @Value("${migration.filter.convert.url}")
     private String filterConvertUrl;
 
+    @Value("${default.sae.ruletype.name: 默认规则类型}")
+    private String defaultRuleTypeName;
+
+    private static int defaultTypeId = 20000;
+
+
 
     @PostConstruct
     private void init() {
@@ -95,6 +101,18 @@ public class Migration implements Runnable {
                 break;
         }
 
+        int exist = mysqlTemplate.queryForObject(String.format("select count(*) from sae_rule_type where id=%d", defaultTypeId), Integer.class);
+        if (exist <= 0) {
+            try {
+                LOG.info("add default rule type.");
+                mysqlTemplate.execute(String.format("INSERT INTO sae_rule_type(id, parent_id, name, id_path, name_path) VALUES (%d, '%s', '%s', '%s', '%s')",
+                        defaultTypeId, "1", defaultRuleTypeName, "/"+defaultTypeId, "/"+defaultRuleTypeName));
+            } catch (Exception e) {
+                LOG.error("add default rule type failed");
+                e.printStackTrace();
+            }
+        }
+
         pauseSeconds(3);
 
         LOG.info("step 2: handle rules......");
@@ -114,7 +132,7 @@ public class Migration implements Runnable {
                     if(exists > 0) continue;
                     // convert rule
                     ResponseEntity<Object> adapter = restTemplate.postForEntity(adaptUrl, or.raw, Object.class);
-                    // add rule
+
                     /*String rawRule = adapter.getBody().toString();
                     try{
                         Map map = JsonUtil.parseObject(rawRule, HashMap.class);
@@ -135,7 +153,7 @@ public class Migration implements Runnable {
                         throw new Exception("add rule failed: " + res.get("messages"));
                     }
                     // update id
-                    mysqlTemplate.update(String.format("update sae_rule set id=%d and status=%d where rule_name='%s'", or.id, or.status, or.name));
+                    mysqlTemplate.update(String.format("update sae_rule set id=%d, status=%d where rule_name='%s'", or.id, or.status, or.name));
                     LOG.info("add rule={} success. failedCnt={}", or.name, --failedCnt);
 
                 } catch (Exception e) {
